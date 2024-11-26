@@ -1,0 +1,35 @@
+{
+  "name": "kinesis-sls-consumer",
+  "version": "1.0.0",
+  "description": "<!-- title: 'AWS NodeJS Example' description: 'This template demonstrates how to deploy a simple NodeJS function running on AWS Lambda using the Serverless Framework.' layout: Doc framework: v4 platform: AWS language: nodeJS priority: 1 authorLink: 'https://github.com/serverless' authorName: 'Serverless, Inc.' authorAvatar: 'https://avatars1.githubusercontent.com/u/13742415?s=200&v=4' -->",
+  "main": "handler.js",
+  "scripts": {
+    "start:dev": "npx tsc && npm run copy-env && NODE_ENV=development node ./build/handler.js",
+    "start": "npx tsc && npm run copy-env && NODE_ENV=production node ./build/handler.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "copy-env": "cp .env* build/",
+    "build": "npx tsc",
+    "start:offline": "sls offline start --stage dev",
+    "start:online": "sls start --stage prod",
+    "deploy:prod": "sls deploy --stage prod",
+    "deploy:stage": "sls deploy --stage stage"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@serverless/utils": "^6.15.0",
+    "@types/aws-lambda": "^8.10.145",
+    "@types/node": "^22.9.3",
+    "serverless": "^4.4.11",
+    "serverless-offline": "^14.3.4",
+    "serverless-offline-kinesis": "^7.0.0"
+  },
+  "dependencies": {
+    "@types/aws-sdk": "^0.0.42",
+    "aws-lambda": "^1.0.7",
+    "aws-sdk": "^2.1692.0",
+    "dotenv": "^16.4.5",
+    "ioredis": "^5.4.1"
+  }
+}

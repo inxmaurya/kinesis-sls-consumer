@@ -1,0 +1,93 @@
+org: inxspin
+app: kinesis-sls-consumer
+
+frameworkVersion: '4'
+
+service: kinesis-sls-consumer
+
+plugins:
+  - serverless-offline
+  - serverless-offline-kinesis
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: ap-south-1
+  accountId: 897722688252
+  stage: ${opt:stage, 'dev'}
+  vpc:
+    securityGroupIds:
+      - sg-02850da9354ba0076
+    subnetIds:
+      - subnet-0240931caddfc2832
+      - subnet-0a10e7087013cfe1c
+      - subnet-09de41cd4377db10a
+  environment:
+    STREAM_NAME: inxKinesisDataStream
+
+resources:
+  Resources:
+    # Uncomment to create a Kinesis stream dynamically
+    # KinesisStream:
+    #   Type: AWS::Kinesis::Stream
+    #   Properties:
+    #     Name: ${self:provider.environment.STREAM_NAME}
+    #     ShardCount: 2
+
+    InxKinesisLambdaConsumerCustomRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: InxKinesisLambdaConsumerCustomRole
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action:
+                - sts:AssumeRole
+        Policies:
+          - PolicyName: InxKinesisConsumerCustomPolicy
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - ec2:CreateNetworkInterface
+                    - ec2:DeleteNetworkInterface
+                    - ec2:DescribeNetworkInterfaces
+                  Resource: "*"
+                - Effect: Allow
+                  Action:
+                    - kinesis:GetShardIterator
+                    - kinesis:GetRecords
+                    - kinesis:DescribeStream
+                    - kinesis:ListShards
+                  Resource: arn:aws:kinesis:${self:provider.region}:${self:provider.accountId}:stream/${self:provider.environment.STREAM_NAME}
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                  Resource: "arn:aws:logs:ap-south-1:${self:provider.accountId}:*"
+
+functions:
+  consumeMessages:
+    role:
+      Fn::GetAtt:
+        - InxKinesisLambdaConsumerCustomRole
+        - Arn
+    handler: ./build/handler.consumeMessages
+    events:
+      - stream:
+          type: kinesis
+          arn: arn:aws:kinesis:${self:provider.region}:${self:provider.accountId}:stream/${self:provider.environment.STREAM_NAME}
+          batchSize: 100  # Adjust batch size as needed
+          startingPosition: TRIM_HORIZON
+
+custom:
+  serverless-offline:
+    httpPort: 5000
+    lambdaPort: 3003
+  isOffline: ${self:provider.stage} == 'dev'
